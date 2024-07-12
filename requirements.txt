@@ -1,0 +1,3 @@
+aiogram
+aiofiles
+aiocron
