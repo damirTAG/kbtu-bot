@@ -2,5 +2,5 @@ config_data.py
 
 __pycache__/
 
-database/data/consultants
-database/backup/consultants
+database/data/consultants.db
+database/backup/consultants.db
