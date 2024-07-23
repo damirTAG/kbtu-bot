@@ -1,43 +1,29 @@
 import asyncio
-import logging
-import handlers.commands
-import handlers.callbacks
-import handlers.files
+from aiologger import Logger
+from handlers.commands import command_router
+from handlers.callbacks import cb_router
+from handlers.files import file_router
 from config import bot, dp
 from database.dbtools import DBTools
-from aiocron import crontab
-from datetime import datetime
 
-logging.basicConfig(level=logging.INFO)
-
-async def backup_database():
-    try:
-        print('w')
-        db_manager = DBTools()
-        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_filename = f"consultants_{current_time}.db"
-        backup_path = f"database/backup/{backup_filename}"
-
-        # backuping
-        db_manager.backup_database(backup_path)
-
-        logging.info(f"Backup created: {backup_path}")
-
-        db_manager.close_connection()
-    except Exception as e:
-        logging.error(f"Failed to create backup: {e}")
+logger = Logger.with_default_handlers(name='bot-logs')
 
 async def main():
-    # settings for backuppp
-    crontab('0 0 * * *', func=backup_database, start=True)
+    db_manager = DBTools()
+    await db_manager.init()
 
     try:
+        dp.include_routers(
+            cb_router,
+            command_router,
+            file_router
+        )
         await dp.start_polling(bot)
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
-        db_manager = DBTools()
-        db_manager.close_connection()
+        await db_manager.close_connection()
+        await logger.shutdown()
 
 if __name__ == "__main__":
     asyncio.run(main())
